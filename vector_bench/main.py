@@ -12,7 +12,10 @@ def main():
 
     source = DataSource.select(args.source)
     client_config = DatabaseConfig(
-        vector_dim=source.vector_dim, url=args.url, name=args.client
+        vector_dim=source.vector_dim,
+        url=args.url,
+        name=args.client,
+        distance=source.distance,
     )
     benchmark = Benchmark(client_config, source)
     if args.insert:

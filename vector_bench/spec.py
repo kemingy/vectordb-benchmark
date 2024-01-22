@@ -60,6 +60,7 @@ class DatabaseConfig:
     vector_dim: int
     name: Literal["pgvecto_rs", "pgvector", "qdrant"] = "pgvecto_rs"
     url: str = "postgresql://postgres:password@127.0.0.1:5432/postgres"
+    distance: Distance = Distance.EUCLIDEAN
 
 
 @dataclass

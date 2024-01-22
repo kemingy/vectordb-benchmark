@@ -9,7 +9,7 @@ from psycopg.types.json import Jsonb
 
 from vector_bench.client.base import BaseClient
 from vector_bench.log import logger
-from vector_bench.spec import DatabaseConfig, Record
+from vector_bench.spec import DatabaseConfig, Distance, Record
 
 
 class VectorDumper(Dumper):
@@ -50,6 +50,13 @@ def register_vector_type(conn: psycopg.Connection, info: TypeInfo):
     adapters.register_loader(info.oid, VectorLoader)
 
 
+DISTANCE_TO_OP = {
+    Distance.EUCLIDEAN: "vector_l2_ops",
+    Distance.COSINE: "vector_cos_ops",
+    Distance.DOT_PRODUCT: "vector_dot_ops",
+}
+
+
 class PgVectorsClient(BaseClient):
     LOAD_EXTENSION = """
 CREATE EXTENSION IF NOT EXISTS vectors;
@@ -64,7 +71,7 @@ CREATE TABLE IF NOT EXISTS benchmark (
     CREATE_INDEX = """
 CREATE INDEX IF NOT EXISTS vector_search
 ON benchmark
-USING vectors (emb vector_l2_ops);
+USING vectors (emb {});
 """
     INSERT = """
 INSERT INTO benchmark (id, emb, metadata)
@@ -86,7 +93,7 @@ ORDER BY score LIMIT %s;
         client.url = config.url
         logger.info("initializing pgvecto.rs database(dim=%s)...", client.dim)
         client.init_db()
-        client.indexing()
+        client.indexing(config.distance)
         return client
 
     def init_db(self):
@@ -96,9 +103,11 @@ ORDER BY score LIMIT %s;
             conn.execute(psycopg.sql.SQL(self.CREATE_TABLE).format(self.dim))
             conn.commit()
 
-    def indexing(self):
+    def indexing(self, distance: Distance):
         with psycopg.connect(self.url) as conn:
-            conn.execute(self.CREATE_INDEX)
+            conn.execute(
+                psycopg.sql.SQL(self.CREATE_INDEX).format(DISTANCE_TO_OP[distance])
+            )
             conn.commit()
 
     async def insert(self, record: Record):

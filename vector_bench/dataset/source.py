@@ -7,7 +7,7 @@ GIST_960_L2 = DatasetConfig(
     num=1000_000,
     distance=Distance.EUCLIDEAN,
     type=FileType.H5,
-    path="datasets/gist-960-euclidean.csv",
+    path="datasets/gist-960-euclidean.hdf5",
     link="https://ann-benchmarks.com/gist-960-euclidean.hdf5",
 )
 
